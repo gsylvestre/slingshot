@@ -17,21 +17,8 @@ var game = {
         state.question = questions.pickRandom("math", "felix");
         questions.generateAnswers();
     
-        game.fix_dpi(window.devicePixelRatio, canvasElement)
         state.shouldDraw = true;
         game.draw();
-    },
-    
-    fix_dpi: function (dpi, canvas) {
-        //get CSS height
-        //the + prefix casts it to an integer
-        //the slice method gets rid of "px"
-        let style_height = +getComputedStyle(canvas).getPropertyValue("height").slice(0, -2);
-        //get CSS width
-        let style_width = +getComputedStyle(canvas).getPropertyValue("width").slice(0, -2);
-        //scale the canvas
-        canvas.setAttribute('height', style_height * dpi);
-        canvas.setAttribute('width', style_width * dpi);
     },
     
     handleCanvasMouseMove: function (evt){
@@ -103,6 +90,7 @@ var game = {
     },
     
     draw: function () {
+        console.log(state.vw);
         //erase all
         ctx.clearRect(0,0,state.vw,state.vh); 
     
