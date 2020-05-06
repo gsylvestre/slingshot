@@ -24,6 +24,8 @@ var state = {
     originY: null,
     xSpeed: 0,
     ySpeed: 0,    
+    answerRadius: 15,
+    answers: [],
 }
 
 var ctx = null;
@@ -40,6 +42,8 @@ function init(){
     canvasElement.addEventListener('pointerdown', handleCanvasMouseDown);
     canvasElement.addEventListener('pointerup', handleCanvasMouseUp);
     canvasElement.addEventListener('pointermove', handleCanvasMouseMove);
+
+    generateAnswers();
 
     draw();
 }
@@ -68,70 +72,81 @@ function handleCanvasMouseUp(evt){
     var xDelta = state.originX - state.ball.x - state.ball.size/2;
     var yDelta = state.originY - state.ball.y - state.ball.size/2;
 
-    console.log(yDelta);
     state.xSpeed = xDelta / 20;
     state.ySpeed = yDelta / 20;
 }
 
+//when ball go out
 function reset(){
     state.ball.init();
     state.xSpeed = 0;
     state.ySpeed = 0;
+}
+
+function generateAnswers(){
+    let numberOfAnswers = 5;
+    for(let i = 1; i <= numberOfAnswers; i++){
+        let a = {
+            number: Math.ceil(Math.random() * 50),
+            x: (state.vw) / (numberOfAnswers+2) * (i) + state.answerRadius,
+            y: 250
+        };
+        state.answers.push(a);
+    }
     console.log(state);
 }
 
+function checkForAnswerCollisions(){
+    for(let i = 0; i < state.answers.length; i++){
+        let answer = state.answers[i];
+        var circle1 = {radius: state.answerRadius, x: answer.x, y: answer.y};
+        var ball = {radius: state.ball.size/2, x: state.ball.x+state.ball.size/2, y: state.ball.y+state.ball.size/2};
+
+        var dx = circle1.x - ball.x;
+        var dy = circle1.y - ball.y;
+        var distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < circle1.radius + ball.radius) {
+            // collision détectée !
+            console.log("collision", answer);
+            console.log(ball);
+            return answer;
+        }
+    }
+    return false;
+}
+
 function draw() {
-    
-    if ((state.ball.x+state.ball.size) < 0 || (state.ball.x > state.vw) ||(state.ball.y+state.ball.size) < 0){
-        console.log("ball out");
+    //erase all
+    ctx.clearRect(0,0,state.vw,state.vh); 
+
+    //ball is out, reset stuff
+    if ((state.ball.x+state.ball.size) < 0 || 
+        (state.ball.x > state.vw) ||
+        (state.ball.y+state.ball.size) < 0){
         reset();
     }
 
-    state.ball.x += state.xSpeed;
-    state.ball.y += state.ySpeed;
-
-
-    ctx.clearRect(0,0,state.vw,state.vh); // effacer le canvas
-
-    //line holding point
-    ctx.beginPath();
-    ctx.setLineDash([]);
-    ctx.arc(state.originX, state.originY, 5, 0, Math.PI * 2);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = '#000000';
-    ctx.fillStyle = "lightblue";
-    ctx.fill();
-    ctx.stroke();
-
-    if (state.ball.y >= state.originY){
-        //line to ball
-        ctx.beginPath();
-        ctx.lineCap = 'round';
-        ctx.moveTo(state.originX, state.originY);
-        var lineLength = Math.hypot(state.ball.x-state.originX, state.ball.y-state.originY);
-        var coeff = 1 / lineLength * 200;
-        ctx.lineWidth = coeff > 3 ? 3 : coeff;
-        ctx.lineTo(state.ball.x + state.ball.size / 2, state.ball.y + state.ball.size / 2);
-        ctx.stroke();
-
-        //aimer
-        if (state.mousedownOnBall){
-            ctx.beginPath();
-            ctx.lineCap = 'butt';
-            ctx.setLineDash([5, 10]);
-            var lineLength = Math.hypot(state.ball.x-state.originX, state.ball.y-state.originY);
-            var coeff = 1 / lineLength * 100;
-            ctx.lineWidth = coeff > 3 ? 3 : coeff;
-            ctx.strokeStyle = 'rgba(255,0,255,'+coeff+')';
-            ctx.moveTo(state.originX, state.originY);
-            var toX = ((state.originX - (state.ball.x - state.originX) - state.ball.size/2) + state.originX) / 2;
-            var toY = ((state.originY - (state.ball.y - state.originY) - state.ball.size/2) + state.originY) / 2;
-            ctx.lineTo(toX, toY);
-            ctx.stroke();
-        }
+    //collision with answer ?
+    var collided = checkForAnswerCollisions();
+    if (collided === false){
+        state.ball.x += state.xSpeed;
+        state.ball.y += state.ySpeed;
+    }
+    else {
+        console.log(collided);
     }
 
-    ctx.drawImage(state.ball.el, state.ball.x, state.ball.y, state.ball.size, state.ball.size);
+    drawer.drawElasticHolder();
+
+    //if under the origin point of the ball
+    if (state.ball.y >= state.originY){
+        drawer.drawElastic();
+        drawer.drawAimer();
+    }
+
+    drawer.drawAnswers();
+    drawer.drawBall();
 
     window.requestAnimationFrame(draw);
 };  
