@@ -9,7 +9,14 @@ var screens = {
         playButton.addEventListener("click", screens.handlePlayButtonClick);
         let playAgainButton = document.getElementById("play-again-btn");
         playAgainButton.addEventListener("click", screens.handlePlayButtonClick);
+        window.addEventListener('resize', screens.resizeStuff);
+    },
 
+    resizeStuff: function(){
+        state.vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        state.vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+        canvasElement.width = state.vw;
+        canvasElement.height = state.vh;
     },
 
     hideAllScreens: function(){
@@ -25,6 +32,7 @@ var screens = {
     }, 
 
     showPlayScreen: function(){
+        document.body.requestFullscreen();
         screens.hideAllScreens();
         screens.playScreen.style.display = "block";
         game.init();
