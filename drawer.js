@@ -1,7 +1,18 @@
 var drawer = {
+    rot: 0,
 
     drawBall: function(){
-        ctx.drawImage(state.ball.el, state.ball.x, state.ball.y, state.ball.size, state.ball.size);
+        ctx.save();
+
+        ctx.translate(state.ball.x+state.ball.size/2, state.ball.y+state.ball.size/2);
+        
+        if (state.elasticGoingOn){
+            drawer.rot += Math.abs(state.ySpeed)/100;
+            ctx.rotate(drawer.rot);
+        }
+    
+        ctx.drawImage(state.ball.el, -state.ball.size/2, -state.ball.size/2, state.ball.size, state.ball.size);
+        ctx.restore();
     },
     
     drawElastic: function(){
@@ -9,8 +20,8 @@ var drawer = {
         ctx.beginPath();
         ctx.lineCap = 'round';
         ctx.moveTo(state.originX, state.originY);
-        var lineLength = Math.hypot(state.ball.x-state.originX, state.ball.y-state.originY);
-        var coeff = 1 / lineLength * 200;
+        let hyp = Math.hypot(state.ball.x-state.originX, state.ball.y-state.originY);
+        var coeff = 1 / hyp * 200;
         ctx.lineWidth = coeff > 3 ? 3 : coeff;
         ctx.lineTo(state.ball.x + state.ball.size / 2, state.ball.y + state.ball.size / 2);
         ctx.stroke();
@@ -21,14 +32,22 @@ var drawer = {
         if (state.mousedownOnBall){
             ctx.beginPath();
             ctx.lineCap = 'butt';
-            ctx.setLineDash([5, 10]);
-            var lineLength = Math.hypot(state.ball.x-state.originX, state.ball.y-state.originY);
-            var coeff = 1 / lineLength * 100;
-            ctx.lineWidth = coeff > 3 ? 3 : coeff;
-            ctx.strokeStyle = 'rgba(255,0,255,'+coeff+')';
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255,0,255)';
+            ctx.setLineDash([5,5]);
+
+            var hypotenuseBall = Math.hypot(state.ball.x+state.ball.size/2-state.originX, state.ball.y+state.ball.size/2-state.originY);
+            var hypotenuseAimer = Math.round(1/hypotenuseBall*5000);
+
+            var angleInRadians = Math.atan2(state.ball.y+state.ball.size/2-state.originY, state.ball.x+state.ball.size/2-state.originX);
+
+            var adjLength = Math.cos(angleInRadians) * hypotenuseAimer;
+            var oppLength = Math.sin(angleInRadians) * hypotenuseAimer;
+
+            var toX = state.originX - adjLength;
+            var toY = state.originY - oppLength;
+
             ctx.moveTo(state.originX, state.originY);
-            var toX = ((state.originX - (state.ball.x - state.originX) - state.ball.size/2) + state.originX) / 2;
-            var toY = ((state.originY - (state.ball.y - state.originY) - state.ball.size/2) + state.originY) / 2;
             ctx.lineTo(toX, toY);
             ctx.stroke();
         }
@@ -36,22 +55,29 @@ var drawer = {
 
     drawAnswers: function(){
         //answers
-        ctx.font = state.answerRadius + "px Arial";
+        ctx.font = state.answerRadius + "px Muli";
         state.answers.forEach(answer => {
-            ctx.fillStyle = "#F0F";
-            ctx.textAlign = 'center';
-            ctx.fillText(answer.number, answer.x, answer.y+state.answerRadius/3);
-
             ctx.beginPath();
             ctx.setLineDash([]);
-            ctx.arc(answer.x, answer.y, state.answerRadius, 0, Math.PI * 2);
-            ctx.lineWidth = 1;
+            ctx.arc(answer.x, answer.y, state.answerRadius, 0, Math.PI * 2 * answer.energy / 100);
+            ctx.lineWidth = 2;
+            ctx.fillStyle = "lightblue";
             ctx.strokeStyle = '#000000';
-            ctx.fillStyle = "transparent";
             ctx.fill();
             ctx.stroke();
-            ctx.strokeStyle = 'red';
+
+            ctx.fillStyle = "#000";
+            ctx.textAlign = 'center';
+            ctx.fillText(answer.number, answer.x, answer.y+state.answerRadius/3);
+            ctx.stroke();
         });
+    },
+
+    drawQuestion: function(){
+        ctx.font = "" + 50 + "px Muli";
+        ctx.fillStyle = "rgba(255,0,255,0.4)";
+        ctx.textAlign = 'center';
+        ctx.fillText(state.question.q, state.originX, state.originY - 100);
     },
 
     drawElasticHolder: function(){
